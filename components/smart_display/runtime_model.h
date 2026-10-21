@@ -591,6 +591,9 @@ struct Tile {
   uint32_t supported = 0, background = 0;
   bool transparent = false;  // "Background: none": card fill and border hidden, contents unchanged.
   std::string icon;  // UTF-8 glyph of a chosen icon the icon fonts contain; empty keeps the domain icon.
+  // The icon of the other stand of an on/off entity, when the manager said (`ia`): a tap swaps to it with the state.
+  std::string icon_other;
+  bool has_icon_other = false;
   uint32_t revision = 0, pending_revision = 0;  // state_revision() fingerprints
   uint32_t pending_since = 0;
   // When Home Assistant answered "it worked" for a watched call (firmware 0.2.59+); 0 while no answer came.

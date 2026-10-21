@@ -791,6 +791,15 @@ inline std::string string(JsonVariant value, size_t maximum = 160) {
   }
   return std::string(text, size);
 }
+// The icon of the other stand of an on/off entity (`ia`, firmware 0.58.0+); "" says the screen's own icon is it. A
+// manager that does not send it leaves the tile without one, and a tap keeps the icon it has.
+inline void read_icon_other(Tile &tile, JsonVariant value) {
+  tile.has_icon_other = value.is<const char *>();
+  tile.icon_other.clear();
+  if (!tile.has_icon_other) return;
+  const uint32_t icon = tile_icon::codepoint(string(value, 8));
+  if (icon && has_icon_glyph(icon)) tile.icon_other = tile_icon::utf8(icon);
+}
 inline std::string list(JsonVariant value) {
   if (!value.is<JsonArray>()) return {};
   std::string out;
@@ -1243,7 +1252,12 @@ inline void wish_write(Tile &t, optimistic::Field field, const std::string &valu
     case F::ROW_OPTION: for (auto &r : t.edit_extra().option_rows) if (r.entity == item) r.current = value; break;
     case F::ROW_NUMBER: for (auto &r : t.edit_extra().number_rows) if (r.entity == item) r.value = std::strtof(value.c_str(), nullptr); break;
     case F::VACUUM_ROW: if (!item.empty()) if (Choice *c = t.choice(item[0])) c->current = value; break;
-    case F::ON_OFF: case F::OPTION: case F::HVAC_MODE: t.state = value; break;
+    case F::ON_OFF:
+      // The icon of the new stand, as Home Assistant will report it, instead of the screen's default for the domain.
+      if (t.has_icon_other && t.state != value && (t.state == "on" || t.state == "off") && (value == "on" || value == "off")) std::swap(t.icon, t.icon_other);
+      t.state = value;
+      break;
+    case F::OPTION: case F::HVAC_MODE: t.state = value; break;
     case F::HUMIDIFIER_MODE: t.edit_extra().humidifier_mode = value; break;
     case F::FAN_MODE: t.edit_extra().fan_mode = value; break;
     case F::SWING_MODE: t.edit_extra().swing_mode = value; break;

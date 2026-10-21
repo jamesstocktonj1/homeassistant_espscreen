@@ -684,6 +684,7 @@ std::string receive(const std::string &payload) {
     if (!initial) {
       uint32_t icon = tile_icon::codepoint(string(root["icon"], 8));
       tile.icon = icon && has_icon_glyph(icon) ? tile_icon::utf8(icon) : "";
+      read_icon_other(tile, root["ia"]);
     }
     auto a = root["a"].as<JsonObject>();
     // The fingerprint of state, attributes and extras (a vacuum's mode or water select changes only
@@ -706,6 +707,7 @@ std::string receive(const std::string &payload) {
     // An icon these fonts lack (a newer set than this firmware) keeps the domain icon.
     uint32_t icon = tile_icon::codepoint(string(options["icon"], 8));
     tile.icon = icon && has_icon_glyph(icon) ? tile_icon::utf8(icon) : "";
+    read_icon_other(tile, options["ia"]);
     tile.tap = string(options["tap"]); if (tile.tap.empty()) tile.tap="auto";
     tile.display = string(options["display"]); if (tile.display.empty()) tile.display="standard";
     // How far a lock's tile may go (firmware 0.5.0+): "confirm" unlocks after a second tap, "lock_only" never unlocks.

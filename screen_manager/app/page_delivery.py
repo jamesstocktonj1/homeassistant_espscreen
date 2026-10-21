@@ -106,7 +106,10 @@ def tile_message(message, tile, *, initial, holders=None):
         message["op"] = "state"
         # HA may change an automatic icon with the entity's state. This is a
         # resolved value, separate from the saved icon choice in configuration.
-        message["icon"] = message.pop("o", {}).get("icon", "")
+        options = message.pop("o", {})
+        message["icon"] = options.get("icon", "")
+        if "ia" in options:
+            message["ia"] = options["ia"]
     return message
 
 

@@ -12,7 +12,7 @@ sys.path.insert(0, str(ROOT / 'screen_manager/app'))
 sys.path.insert(0, str(ROOT / 'tests'))
 import test_portal
 import tile_icons
-from core import discover, packets, state_message, validate_layout
+from core import discover, packets, screen_options, state_message, validate_layout
 
 HEADER = runtime_source()
 
@@ -114,6 +114,23 @@ class IconOptionTests(unittest.IsolatedAsyncioTestCase):
         self.assertNotIn('o', state_message(0, {'entity': 'light.c', 'name': ''}, states))
         self.assertEqual(state_message(0, {'entity': 'light.c', 'name': '', 'options': {'icon': 'auto'}}, states)['o'], {})
         packets(chosen)
+
+    def test_a_toggle_says_the_icon_of_its_other_stand_only_where_it_differs(self):
+        # A light group: the integration's icon is a group of bulbs while on, and one the fonts lack while off.
+        icons = {'entity_component': {'light': {'_': {'default': 'mdi:lightbulb', 'state': {'off': 'mdi:lightbulb-off'}}}},
+                 'entity': {'group': {'light': {'lights': {'default': 'mdi:lightbulb-group', 'state': {'off': 'mdi:lightbulb-group-off'}}}}}}
+        tile_icons.use_ha_icons(icons)
+        self.addCleanup(tile_icons.use_ha_icons, {})
+        entry = {'platform': 'group', 'translation_key': 'lights'}
+        tile = {'entity': 'light.group', 'name': '', 'options': {}}
+        on = screen_options(tile, {}, 'on', entry)
+        self.assertEqual(on, {'icon': 'F1253', 'ia': ''})
+        off = screen_options(tile, {}, 'off', entry)
+        self.assertEqual(off, {'ia': 'F1253'})
+        # The same icon in both stands (a chosen icon, Home Assistant's icon attribute) needs no second one.
+        self.assertNotIn('ia', screen_options({'entity': 'light.a', 'options': {'icon': 'lamp'}}, {}, 'on'))
+        self.assertNotIn('ia', screen_options({'entity': 'light.a'}, {'icon': 'mdi:floor-lamp'}, 'off'))
+        self.assertIsNone(screen_options({'entity': 'sensor.a'}, {}, 'on'))
 
     def test_discovery_reports_home_assistant_icons_the_screen_can_draw(self):
         states = {'light.a': {'state': 'on', 'attributes': {'icon': 'mdi:chandelier'}}, 'light.b': {'state': 'off', 'attributes': {'icon': 'hass:x'}}}

@@ -2524,6 +2524,8 @@ def extras(tile, states, forecast=None, tz=None, hourly=None, now=None, device=N
         return result or None
     return None
 
+TOGGLE_ICON_DOMAINS = ('light', 'switch', 'input_boolean', 'fan', 'automation', 'remote', 'humidifier')
+
 def tile_icon(tile, attrs, state=None, entry=None):
     """Codepoint the screen shows: the chosen icon, else HA's own mdi icon, else the icon Home Assistant's frontend shows
     for this state (app 0.2.67); None keeps the firmware default."""
@@ -2544,6 +2546,12 @@ def screen_options(tile, attrs, state=None, entry=None):
     icon = tile_icon(tile, attrs, state, entry)
     if icon:
         options['icon'] = icon
+    # The icon of the other stand of a toggle when it differs ('' where the screen's own icon is it), so a tap can show
+    # it at once instead of the screen's default bulb while Home Assistant's report is on its way (firmware 0.58.0+).
+    if state in ('on', 'off') and tile['entity'].split('.', 1)[0] in TOGGLE_ICON_DOMAINS:
+        other = tile_icon(tile, attrs, 'off' if state == 'on' else 'on', entry)
+        if other != icon:
+            options['ia'] = other or ''
     controls = resolve_controls(tile)
     if controls:
         options['controls'] = controls
